@@ -1,1 +1,32 @@
-echo "Hello world"
+xlsx2csv accounts.xlsx > data.csv
+# recuperer le nombre de ligne du fichier
+num_lines=$(wc -l < data.csv)
+
+
+# decouper chaque colonne + retirer potentiel espaces dans les noms
+values1=($(cut -d ',' -f 1 data.csv | sed 's/ //g')) 
+values2=($(cut -d ',' -f 2 data.csv | sed 's/ //g'))
+values3=($(cut -d ',' -f 3 data.csv | sed 's/ //g'))
+values4=($(cut -d ',' -f 4 data.csv | sed 's/ //g'))
+
+#mdp=$(awk -F ',' 'NR==4{print $i}' data.csv)
+# boucle pour recuperer les infos de chaque colonne et faire des operations
+for (( i=1; i<$num_lines; i++ )); do
+
+#recuperer le mot de passe
+	mdp=$(awk -F ',' 'NR==4{print $i}' data.csv)
+	echo $mdp
+
+# creer les usernames
+	first="${values1[$i]:0:1}"
+	username="$first${values2[$i]}"
+	#echo $username
+	#echo ${values4[$i]}
+
+# creer les user linux
+	#useradd $username
+	#passwd $username
+		
+
+
+done
