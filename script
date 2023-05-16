@@ -1,5 +1,14 @@
 # recuperer le nombre de ligne du fichier
 num_lines=$(wc -l < accounts.csv)
+serv=$1
+log=$2
+mdp=$3
+#log="aaugus25"
+#serv="10.30.48.100"
+#mdp="Nagatoro25#"
+
+#sshpass -p $mdp ssh $log@$serv
+#apt-get install sshpass
 
 # decouper chaque colonne + retirer potentiel espaces dans les noms
 values1=($(cut -d ';' -f 1 accounts.csv | sed 's/ //g'))
@@ -7,8 +16,13 @@ values2=($(cut -d ';' -f 2 accounts.csv | sed 's/ //g'))
 values3=($(cut -d ';' -f 3 accounts.csv | sed 's/ //g'))
 values4=($(cut -d ';' -f 4 accounts.csv | sed 's/ //g'))
 
+
 mkdir /home/shared
+mkdir /home/saves
+chmod 707 /home/saves
+touch /home/retablir_sauvegarde
 chmod u+rx /home/shared
+chmod u+rw /home/saves
 # boucle pour recuperer les infos de chaque colonne et faire des operations
 for (( i=1; i<$num_lines; i++ )); do
 
@@ -19,35 +33,49 @@ for (( i=1; i<$num_lines; i++ )); do
 	first="${values1[$i]:0:1}"
 	username="$first${values2[$i]}" 
 
-	echo $username
-	echo $pass	
+	#echo $username
+	#echo $pass	
 # creer les user linux
-	#useradd -m -p "$pass" $username
-	#useradd -m $username
 	test=bonjour
 	useradd -m -p "$(openssl passwd -1 "$test")" "$username"
 	#chage -d 0 "$username"
 	
 	#adduser --force-badname "$username"
 	#usermod -p "$(openssl passwd -1 "$test")" "$username"  
-	#mkdir /home/"$username"
+
+# creer les fichiers et gerer leurs droits
 	mkdir /home/"$username"/a_sauver
-	#chmod a+rx /home/shared
-	
+	touch /home/"$username"/a_sauver/content
+	echo "hello world" > /home/"$username"/a_sauver/content	
 	mkdir /home/shared/"$username"
 	chmod u+rx /home/shared/"$username"
 	chown "$username" /home/shared/"$username"
 	chmod u+w /home/shared/"$username"
-	#chown "$var":"$var" /home/shared/"$var"
-	#chmod u+rwx,go+rx /home/shared/"$var"
 	
 	chown "$username":"$username" /home/"$username"
 	chmod 700 /home/"$username"
-	#test=bonjour
-	#declare -p pass
-	#echo $test  
 	#echo "$username:$pass" | chpasswd
 	#chpasswd $username:$pass
-	#passwd $username
-		
+
+	recipients="${values3[$i]}"
+	subject="Sujet de l'e-mail"
+	envoyeur="maxime.roquelle@isen-ouest.yncrea.fr"
+	body="Voici votre login et votre mot de passe actuel : log: $username et mdp: $pass. Celui-ci s'expirera a votre premiere connexion!!"
+	
+	sshpass -p $mdp ssh -o StrictHostKeyChecking=no $log@$serv "mail --subject \"$subject\" --exec \"set sendmail=smtp://maxime.roquelle%40isen-ouest.yncrea.fr:RTX65azerty%40oplm@smtp.office365.com:587\" --append \"From:$envoyeur\" $recipients <<< \"$body\""
 done
+
+
+
+# compresser en tgz le contenu de a_sauver
+#tar czvf save_[$username].tgz /home/$username/a_sauver/
+#mv save_[$username].tgz /home/saves/
+
+#echo "0 23 * * * for (( i=1; i<$num_lines; i++ )); do 
+
+	#first="${values1[$i]:0:1}"
+	#username="$first${values2[$i]}"
+	#tar czvf save_[$username].tgz /home/$username/a_sauver/
+	#mv save_[$username].tgz /home/saves/
+
+# >> /etc/crontab

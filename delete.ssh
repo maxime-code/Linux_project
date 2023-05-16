@@ -1,0 +1,22 @@
+userdel -r EWeatherwax
+userdel -r GOgg
+userdel -r ANitt
+userdel -r TAching
+userdel -r MStoHelit
+userdel -r YStoHelit
+userdel -r SStoHelit
+userdel -r HVetinari
+userdel -r LofQuirm
+userdel -r SVimes
+userdel -r CIronfoundersson
+userdel -r AvonUberwald
+userdel -r FColon
+userdel -r NNobbs
+userdel -r MRidcullus
+userdel -r PStibbons
+userdel -r SRamkin
+userdel -r MLaurent
+rm -rf /home/shared
+rm -rf /home/saves
+rm -rf /home/retablir_sauvegarde
+
