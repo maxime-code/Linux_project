@@ -1,44 +1,46 @@
 source config.sh
 
-# recuperer le nombre de ligne du fichier
-num_lines=$(wc -l < accounts.csv)
+# installation de eclipse
+wget "https://www.eclipse.org/downloads/download.php?file=/oomph/epp/2023-03/R/eclipse-inst-jre-linux64.tar.gz&r=1"
+# decompresser le fichier
+tar -xzf "download.php?file=%2Foomph%2Fepp%2F2023-03%2FR%2Feclipse-inst-jre-linux64.tar.gz&r=1"
 
-# recuperer les valeurs des arguments du script
+# recuperer les infos mis en argument
+mailserver=$1
+mailuser=$2
+mailmdp=$3
+mailuser="${mailuser//@/%40}"
+# recuperer le nombre de ligne du fichier
+num_lines=$(wc -l < $nameofCSVfile)
+
 
 # recuperer les valeurs de chaque colonne
 # decouper chaque colonne + retirer potentiel espaces dans les noms
-values1=($(cut -d ';' -f 1 accounts.csv | sed 's/ //g'))
-values2=($(cut -d ';' -f 2 accounts.csv | sed 's/ //g'))
-values3=($(cut -d ';' -f 3 accounts.csv | sed 's/ //g'))
-values4=($(cut -d ';' -f 4 accounts.csv | sed 's/ //g'))
+values1=($(cut -d ';' -f 1 $nameofCSVfile | sed 's/ //g'))
+values2=($(cut -d ';' -f 2 $nameofCSVfile | sed 's/ //g'))
+values3=($(cut -d ';' -f 3 $nameofCSVfile | sed 's/ //g'))
+values4=($(cut -d ';' -f 4 $nameofCSVfile | sed 's/ //g'))
 
 
 mkdir /home/shared
-rm /home/retablir_sauvegarde.sh
 touch /home/retablir_sauvegarde.sh
 chmod u+rx /home/shared
 
-num_lines=5
+# num_lines=5
 
 # boucle pour recuperer les infos de chaque colonne et faire des operations
 for (( i=1; i<$num_lines; i++ )); do
 
 #recuperer le mot de passe
-	pass="${values4[$i]}"
+	pass=${values4[$i]}
 
 # concatenation du prenom + nom
 	first="${values1[$i]:0:1}"
 	username="$first${values2[$i]}" 
 
-	#echo $username
-	#echo $pass	
-
 # creer les user linux
-	test=bonjour
-	useradd -m -p "$(openssl passwd -1 "$pass")" "$username"
-	#chage -d 0 "$username"
-	
-	#usermod -p "$(openssl passwd -1 "$test")" "$username"  
+	useradd -m -p "$(openssl passwd -1 $pass)" "$username"
+	chage -d 0 "$username"	
 
 # creer les fichiers et gerer leurs droits
 
@@ -62,30 +64,31 @@ for (( i=1; i<$num_lines; i++ )); do
 
 	# on envoie un mail a chaque user
 	#ssh -i $pathtokey mroque25@$ip "mail --subject \"$subject\" --exec \"set sendmail=smtp://maxime.roquelle%40isen-ouest.yncrea.fr:RTX65azerty%40oplm@smtp.office365.com:587\" --append \"From:$envoyeur\" $recipients <<< \"$body\""
-	#ssh -i $pathtokey $log@$ip "mail --subject \"$subject\" --exec \"set sendmail=smtp://maxime.roquelle%40isen-ouest.yncrea.fr:RTX65azerty%40oplm@smtp.office365.com:587\" --append \"From:$envoyeur\" $recipients <<< \"$body\""
+	ssh -i $pathtokey $log@$ip "mail --subject \"$subject\" --exec \"set sendmail=smtp://$mailuser:$mailmdp@$mailserver\" --append \"From:$envoyeur\" $recipients <<< \"$body\""
 
-	# touch cron_temp
-	# echo "0 23 * * 1-5 tar -czf save_$username.tgz /home/$username/a_sauver/" >> cron_temp
-	# echo "0 23 * * 1-5 scp -i $pathtokey save_$username.tgz $log@$ip:/home/saves" >> cron_temp
-	# crontab cron_temp
-	# rm cron_temp
+	touch cron_temp
+	echo "0 23 * * 1-5 tar -czf save_$username.tgz /home/$username/a_sauver/" >> cron_temp
+	echo "0 23 * * 1-5 scp -i $pathtokey save_$username.tgz $log@$ip:/home/saves" >> cron_temp
+	crontab cron_temp
+	rm cron_temp
 
 	# on genere des clefs ssh pour chaque user
-	# mkdir /home/"$username"/.ssh
-	# ssh-keygen -t rsa -N "" -f /home/"$username"/.ssh/id_rsa
+	mkdir /home/"$username"/.ssh
+	ssh-keygen -t rsa -N "" -f /home/"$username"/.ssh/id_rsa
 
 	# # on envoie la clef publique sur le serveur
-	# scp -i $pathtokey /home/"$username"/.ssh/id_rsa.pub $log@$ip:/home/$log/.ssh
+	scp -i $pathtokey /home/"$username"/.ssh/id_rsa.pub $log@$ip:/home/$log/.ssh
 
 	# # on ajoute la clef publique dans authorized_keys	
-	# ssh -i $pathtokey $log@$ip "cat /home/$log/.ssh/id_rsa.pub >> /home/$log/.ssh/authorized_keys"
+	ssh -i $pathtokey $log@$ip "cat /home/$log/.ssh/id_rsa.pub >> /home/$log/.ssh/authorized_keys"
 
+	ln -s eclipse-installer /home/"$username"/
 done
 
 # on genere un script pour retablir les sauvegardes
-# echo "rm /home/\$1/a_sauver/*" >> /home/retablir_sauvegarde.sh
-# echo "scp -i $pathtokey $log@$ip:/home/$log/savesTest/save_\$1.tgz /home/\$1/a_sauver" >> /home/retablir_sauvegarde.sh
-# echo "tar -xzf /home/\$1/a_sauver/save_\$1.tgz" >> /home/retablir_sauvegarde.sh
+echo "rm /home/\$1/a_sauver/*" >> /home/retablir_sauvegarde.sh
+echo "scp -i $pathtokey $log@$ip:/home/saves/save_\$1.tgz /home/\$1/a_sauver" >> /home/retablir_sauvegarde.sh
+echo "tar -xzf /home/\$1/a_sauver/save_\$1.tgz" >> /home/retablir_sauvegarde.sh
 
 # bloque les connexions ftp et udp
 # apt install ufw 
@@ -93,77 +96,33 @@ done
 # ufw deny UDP
 # ufw enable
 
-
-# installation de eclipse
-#wget "https://www.eclipse.org/downloads/download.php?file=/oomph/epp/2023-03/R/eclipse-inst-jre-linux64.tar.gz&r=1"
-# decompresser le fichier
-# tar -xzf "download.php?file=%2Foomph%2Fepp%2F2023-03%2FR%2Feclipse-inst-jre-linux64.tar.gz&r=1"
-
-# # installation de nextcloud
-# apt install snapd -y
-# # systemctl start snapd
-# service snapd start
-# snap install nextcloud
-
-# wget -qO - https://apt.jurisic.org/Release.key | gpg --dearmor | sudo dd of=/usr/share/keyrings/jurisic-keyring.gpg
-# echo "deb [ signed-by=/usr/share/keyrings/jurisic-keyring.gpg ] https://apt.jurisic.org/debian/ $(lsb_release -cs) main contrib non-free" | sudo tee /etc/apt/sources.list.d/jurisic.list
-# sudo apt update
-# sudo apt install nextcloud-server
-
-# nextcloud.manual-install nextcloud-admin N3x+_Cl0uD
-
-# apt install snapd -y
-# snap install nextcloud
-
 # mise a jour des paquets
-# apt-get update -y
+apt-get update -y
 
 # # installation de apache2, php et mysql
-# apt-get install apache2 libapache2-mod-php
-# apt-get install -y php php-gd php-curl php-zip php-dom php-xml php-simplexml php-mbstring
-# apt-get install mariadb-server php-mysql wget unzip
+apt-get install apache2 libapache2-mod-php
+apt-get install -y php php-gd php-curl php-zip php-dom php-xml php-simplexml php-mbstring
+apt-get install mariadb-server php-mysql wget unzip
 
 # # activation des modules
-# service apache2 start
-# service mysql start
+service apache2 start
+service mysql start
 
 # # creation de la base de donnees nextcloud et de l'utilisateur
 # # celui-ci demande un mot de passe, il est vide par défaut
-# mysqladmin -u root -p create nextcloudBASEDEDONNEES
-# mysql -u root -p -e "CREATE USER 'isen'@'localhost' IDENTIFIED BY 'nesi3630'; GRANT ALL PRIVILEGES ON nextcloudBASEDEDONNEES.* TO 'isen'@'localhost'; FLUSH PRIVILEGES;"
+mysqladmin -u root -p create nextcloudBASEDEDONNEES
+mysql -u root -p -e "CREATE USER 'isen'@'localhost' IDENTIFIED BY 'nesi3630'; GRANT ALL PRIVILEGES ON nextcloudBASEDEDONNEES.* TO 'isen'@'localhost'; FLUSH PRIVILEGES;"
 
 # # telechargement de nextcloud
-# wget https://download.nextcloud.com/server/releases/nextcloud-19.0.0.zip
-# unzip nextcloud-19.0.0.zip
+wget https://download.nextcloud.com/server/releases/nextcloud-19.0.0.zip
+unzip nextcloud-19.0.0.zip
 
 # # on deplace nextcloud dans le dossier html
-# mv nextcloud /var/www/html
+mv nextcloud /var/www/html
 
 # # on change les droits
-# #chown -R www-data:www-data /var/www/html/nextcloud
-# #chmod -R 755 /var/www/html/nextcloud
+chown -R www-data:www-data /var/www/html/nextcloud
+chmod -R 755 /var/www/html/nextcloud
 
 # # on relance apache2
-# service apache2 reload
-
-# # creation de tous les utilisateurs
-# export OC_PASS="$password"
-# occ user:add --password-from-env --display-name="$username" $username
-
-
-#tar czvf save_[$username].tgz /home/$username/a_sauver/
-#mv save_[$username].tgz /home/saves/
-
-#for (( i=1; i<$num_lines; i++ )); do 
-
-# 	#first="${values1[$i]:0:1}"
-# 	username="$first${values2[$i]}"
-# 	tar -czf save_$username.tgz /home/$username/a_sauver/
-# 	scp -i $pathtokey save_$username.tgz $log@$ip:/home/$log/savesTest
-# 	#scp -i $pathtokey save_$username.tgz $log@$ip:/home/saves
-# 	rm save_$username.tgz
-
-# done
-# >> /etc/crontab
-
-
+service apache2 reload

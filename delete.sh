@@ -18,5 +18,4 @@ userdel -r SRamkin
 userdel -r MLaurent
 rm -rf /home/shared
 rm -rf /home/saves
-rm -rf /home/retablir_sauvegarde
-
+rm /home/retablir_sauvegarde.sh
