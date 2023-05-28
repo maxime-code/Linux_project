@@ -10,7 +10,7 @@ MySQL risque de demander un mot de passe pour créer la base de données Nextclo
 ## 2) NextCloud :
 
 Une fois le script lancé, se rendre sur http://10.30.48.100/nextcloud/index.php
-Puis rentrer :
+Puis rentrer :<br>
 -log de l'administrateur (nextcloud-admin)<br>
 -puis son mot de passe (N3x+_Cl0uD)<br>
 
