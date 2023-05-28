@@ -10,6 +10,7 @@ mailserver=$1
 mailuser=$2
 mailmdp=$3
 mailuser="${mailuser//@/%40}"
+
 # recuperer le nombre de ligne du fichier
 num_lines=$(wc -l < $nameofCSVfile)
 
@@ -25,8 +26,6 @@ values4=($(cut -d ';' -f 4 $nameofCSVfile | sed 's/ //g'))
 mkdir /home/shared
 touch /home/retablir_sauvegarde.sh
 chmod u+rx /home/shared
-
-# num_lines=5
 
 # boucle pour recuperer les infos de chaque colonne et faire des operations
 for (( i=1; i<$num_lines; i++ )); do
@@ -91,34 +90,37 @@ echo "scp -i $pathtokey $log@$ip:/home/saves/save_\$1.tgz /home/\$1/a_sauver" >>
 echo "tar -xzf /home/\$1/a_sauver/save_\$1.tgz" >> /home/retablir_sauvegarde.sh
 
 # bloque les connexions ftp et udp
-# apt install ufw 
-# ufw deny FTP
-# ufw deny UDP
-# ufw enable
+apt install ufw
+ufw deny FTP
+ufw deny UDP
+ufw enable
+
+
+# --- NextCLoud	installation ---
 
 # mise a jour des paquets
 ssh -i $pathtokey $log@$ip "apt-get update -y"
 
-# # installation de apache2, php et mysql
+# installation de apache2, php et mysql
 ssh -i $pathtokey $log@$ip "apt-get install apache2 libapache2-mod-php"
 ssh -i $pathtokey $log@$ip "apt-get install -y php php-gd php-curl php-zip php-dom php-xml php-simplexml php-mbstring"
 ssh -i $pathtokey $log@$ip "apt-get install mariadb-server php-mysql wget unzip"
 
-# # activation des modules
+# activation des modules
 ssh -i $pathtokey $log@$ip "service apache2 start"
 ssh -i $pathtokey $log@$ip "service mysql start"
 
-# # creation de la base de donnees nextcloud et de l'utilisateur
-# # celui-ci demande un mot de passe, il est vide par défaut
+# creation de la base de donnees nextcloud et de l'utilisateur
+# celui-ci demande un mot de passe, il est vide par défaut
 ssh -i $pathtokey $log@$ip "mysqladmin -u root -p create nextcloudBASEDEDONNEES"
 ssh -i $pathtokey $log@$ip "mysql -u root -p -e \"CREATE USER 'isen'@'localhost' IDENTIFIED BY 'nesi3630'; GRANT ALL PRIVILEGES ON nextcloudBASEDEDONNEES.* TO 'isen'@'localhost'; FLUSH PRIVILEGES;\""
 
-# # telechargement de nextcloud
+# telechargement de nextcloud
 ssh -i $pathtokey $log@$ip "wget https://download.nextcloud.com/server/releases/nextcloud-19.0.0.zip"
 ssh -i $pathtokey $log@$ip "unzip nextcloud-19.0.0.zip"
 
-# # on deplace nextcloud dans le dossier html
+# on deplace nextcloud dans le dossier html
 ssh -i $pathtokey $log@$ip "mv nextcloud /var/www/html"
 
-# # on relance apache2
+# on relance apache2
 ssh -i $pathtokey $log@$ip "service apache2 reload"
