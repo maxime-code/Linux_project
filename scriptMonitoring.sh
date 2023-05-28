@@ -91,7 +91,7 @@ echo "</html>"
 
 service apache2 start
 
-# Enregistrer l'utilisation des CPU dans un fichier
+# Enregistrer l'utilisation du CPU dans un fichier
 ssh -i $pathtokey $log@$ip "top -b -n 1 | grep "Cpu(s)" | awk '{print $8}' > /var/www/html/cpu_usage.txt"
 # Enregistrer l'utilisation de la mémoire dans un fichier
 ssh -i $pathtokey $log@$ip "free -m | awk 'NR==2{print $3 " " $4}' > /var/www/html/memory_usage.txt"
