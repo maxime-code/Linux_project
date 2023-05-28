@@ -97,32 +97,28 @@ echo "tar -xzf /home/\$1/a_sauver/save_\$1.tgz" >> /home/retablir_sauvegarde.sh
 # ufw enable
 
 # mise a jour des paquets
-apt-get update -y
+ssh -i $pathtokey $log@$ip "apt-get update -y"
 
 # # installation de apache2, php et mysql
-apt-get install apache2 libapache2-mod-php
-apt-get install -y php php-gd php-curl php-zip php-dom php-xml php-simplexml php-mbstring
-apt-get install mariadb-server php-mysql wget unzip
+ssh -i $pathtokey $log@$ip "apt-get install apache2 libapache2-mod-php"
+ssh -i $pathtokey $log@$ip "apt-get install -y php php-gd php-curl php-zip php-dom php-xml php-simplexml php-mbstring"
+ssh -i $pathtokey $log@$ip "apt-get install mariadb-server php-mysql wget unzip"
 
 # # activation des modules
-service apache2 start
-service mysql start
+ssh -i $pathtokey $log@$ip "service apache2 start"
+ssh -i $pathtokey $log@$ip "service mysql start"
 
 # # creation de la base de donnees nextcloud et de l'utilisateur
 # # celui-ci demande un mot de passe, il est vide par défaut
-mysqladmin -u root -p create nextcloudBASEDEDONNEES
-mysql -u root -p -e "CREATE USER 'isen'@'localhost' IDENTIFIED BY 'nesi3630'; GRANT ALL PRIVILEGES ON nextcloudBASEDEDONNEES.* TO 'isen'@'localhost'; FLUSH PRIVILEGES;"
+ssh -i $pathtokey $log@$ip "mysqladmin -u root -p create nextcloudBASEDEDONNEES"
+ssh -i $pathtokey $log@$ip "mysql -u root -p -e \"CREATE USER 'isen'@'localhost' IDENTIFIED BY 'nesi3630'; GRANT ALL PRIVILEGES ON nextcloudBASEDEDONNEES.* TO 'isen'@'localhost'; FLUSH PRIVILEGES;\""
 
 # # telechargement de nextcloud
-wget https://download.nextcloud.com/server/releases/nextcloud-19.0.0.zip
-unzip nextcloud-19.0.0.zip
+ssh -i $pathtokey $log@$ip "wget https://download.nextcloud.com/server/releases/nextcloud-19.0.0.zip"
+ssh -i $pathtokey $log@$ip "unzip nextcloud-19.0.0.zip"
 
 # # on deplace nextcloud dans le dossier html
-mv nextcloud /var/www/html
-
-# # on change les droits
-chown -R www-data:www-data /var/www/html/nextcloud
-chmod -R 755 /var/www/html/nextcloud
+ssh -i $pathtokey $log@$ip "mv nextcloud /var/www/html"
 
 # # on relance apache2
-service apache2 reload
+ssh -i $pathtokey $log@$ip "service apache2 reload"
